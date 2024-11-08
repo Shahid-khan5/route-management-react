@@ -144,21 +144,52 @@ function App() {
                   Add Location
                 </button>
 
-                <div className="flex-1 flex items-center gap-4">
-                  <input
-                    type="time"
-                    value={targetTime}
-                    onChange={(e) => setTargetTime(e.target.value)}
-                    className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  <button
-                    onClick={calculateRoute}
-                    disabled={loading}
-                    className="flex-1 px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50"
-                  >
-                    {loading ? 'Calculating...' : 'Calculate Route'}
-                  </button>
-                </div>
+                
+<div className="flex-1 flex flex-col gap-2">
+  <label className="flex items-center gap-2">
+    <span className="text-gray-700 font-medium">Target Arrival Time</span>
+    <div className="group relative">
+      <button
+        type="button"
+        className="text-gray-400 hover:text-gray-600"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <circle cx="12" cy="12" r="10" />
+          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+          <path d="M12 17h.01" />
+        </svg>
+      </button>
+      <div className="invisible group-hover:visible absolute left-0 top-6 w-64 p-2 bg-gray-800 text-white text-sm rounded-md shadow-lg z-10">
+        Enter your desired arrival time at the final destination. The system will calculate backwards to determine when you need to leave home.
+      </div>
+    </div>
+  </label>
+  <div className="flex gap-4">
+    <input
+      type="time"
+      value={targetTime}
+      onChange={(e) => setTargetTime(e.target.value)}
+      className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+    <button
+      onClick={calculateRoute}
+      disabled={loading}
+      className="flex-1 px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50"
+    >
+      {loading ? 'Calculating...' : 'Calculate Route'}
+    </button>
+  </div>
+</div>
               </div>
 
               {results && <RouteResultsDisplay results={results} visible={showResults} />}
