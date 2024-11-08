@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { AlarmClock, Clock, Plus } from 'lucide-react';
 import { LocationInput } from './components/LocationInput';
 import { RouteResultsDisplay } from './components/RouteResults';
 import { Map } from './components/Map';
@@ -14,10 +14,11 @@ function App() {
     { address: '', stopDuration: 0 },
     { address: '', stopDuration: 60 },
   ]);
+  const [departureTime, setDepartureTime] = useState<string>('');
+  const [targetTime, setTargetTime] = useState<string>('');
   const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
   const [results, setResults] = useState<RouteResults | null>(null);
   const [showResults, setShowResults] = useState(false);
-  const [targetTime, setTargetTime] = useState<string>('');
   const [loading, setLoading] = useState(false);
 
   const handleLocationUpdate = (index: number, location: Location) => {
@@ -61,10 +62,7 @@ function App() {
 
       setDirections(result);
 
-      // Calculate times
-      let currentTime = targetTime 
-        ? new Date(`2024-01-01 ${targetTime}`)
-        : new Date();
+      let currentTime: Date;
 
       if (targetTime) {
         // Calculate backward from target time
@@ -76,6 +74,11 @@ function App() {
           }
         }
         currentTime = addMinutes(new Date(`2024-01-01 ${targetTime}`), -totalDuration);
+      } else {
+        // Use departure time if set, otherwise use current time
+        currentTime = departureTime 
+          ? new Date(`2024-01-01 ${departureTime}`)
+          : new Date();
       }
 
       const routeResults: RouteResults = {
@@ -113,99 +116,116 @@ function App() {
       setLoading(false);
     }
   };
-
-  return (
-    <GoogleMapsProvider apiKey={GOOGLE_MAPS_API_KEY}>
-      <div className="min-h-screen bg-gray-100">
-        <div className="container mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">
-            Route Management
-          </h1>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="space-y-6">
-              {locations.map((location, index) => (
-                <LocationInput
-                  key={index}
-                  location={location}
-                  index={index}
-                  isHome={index === 0}
-                  onUpdate={handleLocationUpdate}
-                  onRemove={handleLocationRemove}
-                />
-              ))}
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button
-                  onClick={addLocation}
-                  className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-                >
-                  <Plus className="w-5 h-5" />
-                  Add Location
-                </button>
-
-                
-<div className="flex-1 flex flex-col gap-2">
-  <label className="flex items-center gap-2">
-    <span className="text-gray-700 font-medium">Target Arrival Time</span>
-    <div className="group relative">
-      <button
-        type="button"
-        className="text-gray-400 hover:text-gray-600"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <circle cx="12" cy="12" r="10" />
-          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-          <path d="M12 17h.01" />
-        </svg>
-      </button>
-      <div className="invisible group-hover:visible absolute left-0 top-6 w-64 p-2 bg-gray-800 text-white text-sm rounded-md shadow-lg z-10">
-        Enter your desired arrival time at the final destination. The system will calculate backwards to determine when you need to leave home.
-      </div>
-    </div>
-  </label>
-  <div className="flex gap-4">
-    <input
-      type="time"
-      value={targetTime}
-      onChange={(e) => setTargetTime(e.target.value)}
-      className="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
-    <button
-      onClick={calculateRoute}
-      disabled={loading}
-      className="flex-1 px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50"
-    >
-      {loading ? 'Calculating...' : 'Calculate Route'}
-    </button>
-  </div>
-</div>
+      return (
+        <GoogleMapsProvider apiKey={GOOGLE_MAPS_API_KEY}>
+          <div className="min-h-screen bg-gray-100">
+            <div className="container mx-auto px-4 py-8">
+              <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">
+                Route Management
+              </h1>
+    
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  {/* Home Location with Departure Time */}
+                  <div className="p-4 bg-white rounded-lg shadow space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-gray-700 font-medium">Home Location</span>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <LocationInput
+                        location={locations[0]}
+                        index={0}
+                        isHome={true}
+                        onUpdate={handleLocationUpdate}
+                        onRemove={() => {}}
+                      />
+                      <div className="flex flex-col">
+                        <label className="text-sm text-gray-600 mb-1 flex items-center gap-2">
+                          <Clock className="w-4 h-4" /> Departure Time
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="time"
+                            value={departureTime}
+                            onChange={(e) => {
+                              setDepartureTime(e.target.value);
+                              setTargetTime(''); // Clear target time when setting departure time
+                            }}
+                            className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <Clock className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+    
+                  {/* Other Locations */}
+                  {locations.slice(1).map((location, index) => (
+                    <LocationInput
+                      key={index + 1}
+                      location={location}
+                      index={index + 1}
+                      isHome={false}
+                      onUpdate={handleLocationUpdate}
+                      onRemove={handleLocationRemove}
+                    />
+                  ))}
+    
+                  {/* Final Destination Target Time */}
+                  <div className="p-4 bg-white rounded-lg shadow">
+                    <div className="flex flex-col">
+                      <label className="text-sm text-gray-600 mb-1 flex items-center gap-2">
+                        <AlarmClock className="w-4 h-4" /> Target Arrival Time (Optional)
+                        <span className="ml-2 text-xs text-gray-500">
+                          Will calculate required departure time
+                        </span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="time"
+                          value={targetTime}
+                          onChange={(e) => {
+                            setTargetTime(e.target.value);
+                            setDepartureTime(''); // Clear departure time when setting target time
+                          }}
+                          className="w-full px-4 py-2 pl-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <AlarmClock className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                      </div>
+                    </div>
+                  </div>
+    
+                  <div className="flex gap-4">
+                    <button
+                      onClick={addLocation}
+                      className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                    >
+                      <Plus className="w-5 h-5" />
+                      Add Location
+                    </button>
+                    <button
+                      onClick={calculateRoute}
+                      disabled={loading}
+                      className="flex-1 px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:opacity-50"
+                    >
+                      {loading ? 'Calculating...' : 'Calculate Route'}
+                    </button>
+                  </div>
+    
+                  {results && <RouteResultsDisplay results={results} visible={showResults} />}
+                </div>
+    
+                <div className="lg:sticky lg:top-8 space-y-6">
+                  <Map
+                    locations={locations}
+                    directions={directions}
+                  />
+                </div>
               </div>
-
-              {results && <RouteResultsDisplay results={results} visible={showResults} />}
-            </div>
-
-            <div className="lg:sticky lg:top-8 space-y-6">
-              <Map
-                locations={locations}
-                directions={directions}
-              />
             </div>
           </div>
-        </div>
-      </div>
-    </GoogleMapsProvider>
-  );
-}
-
-export default App;
+        </GoogleMapsProvider>
+      );
+    }
+    
+    export default App;
